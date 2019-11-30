@@ -13,9 +13,8 @@ var webpack = require('webpack')
 var proxyMiddleware = require('http-proxy-middleware')
 var portfinder = require('portfinder')
 var webpackConfig = require('./webpack.dev.conf')
-var utils = require('./utils')
+var rm = require('rimraf')
 var chalk = require('chalk')
-var config = require('../config')
 
 // default port where dev server listens for incoming traffic
 var port = process.env.PORT || config.dev.port
@@ -33,7 +32,6 @@ if (process.env.PLATFORM === 'swan') {
 rm(path.join(config.build.assetsRoot, '*'), err => {
   if (err) throw err
   webpack(webpackConfig, function (err, stats) {
-    spinner.stop()
     if (err) throw err
     if (process.env.PLATFORM === 'swan') {
       utils.writeFrameworkinfo()
