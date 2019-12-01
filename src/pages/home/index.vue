@@ -6,31 +6,45 @@
       <icon class="iconSearch" type="search" size="15" color="#42bd56" />
       <button class="AppBtn">打开豆瓣App</button>
     </div>
-    <!-- 更多部分 -->
-    <div class="moreBox">
-      <span>影院热映</span>
-      <span class="moreText">更多</span>
-    </div>
-    <!-- 影片展示区域 -->
-    <scroll-view class="scroll-view_H" scroll-x="true" style="width: 100%">
-      <view class="scroll-view-item_H" v-for="item in moveList" :key="item.id">
-        <img :src="item.images.large" alt />
-        <p class="moveName">{{item.title}}</p>
-        <!-- 评分星星 -->
-        <div class="score">
-          <div class="imgBox" v-if="item.rating.average">
-            <img
-              class="scoreStar"
-              v-for="(item2,index2) in 5"
-              :key="index2"
-              src="../../../static/images/star.svg"
-              alt
-            />
-          </div>
-          <span class="commentScore">{{item.rating.average?item.rating.average:'暂无评分'}}</span>
+    <!-- 影院热映部分 -->
+    <div v-if="cateMoveList[0].list.length&&cateMoveList[1].list.length">
+      <div v-for="(cate,i) in cateMoveList" :key="i">
+        <div class="moreBox">
+          <span>{{cate.name}}</span>
+          <!-- 给更多按钮添加点击事件 -->
+          <span class="moreText" @click="tomore(cate.param)">更多</span>
         </div>
-      </view>
-    </scroll-view>
+        <!-- 影片展示区域 -->
+        <div>
+          <scroll-view class="scroll-view_H" scroll-x="true" style="width: 100%">
+            <view class="scroll-view-item_H" v-for="item in cate.list" :key="item.id">
+              <img :src="item.images.large" alt />
+              <p class="moveName">{{item.title}}</p>
+              <!-- 评分星星 -->
+              <div class="score">
+                <div class="imgBox" v-if="item.rating.average">
+                  <img
+                    class="scoreStar"
+                    v-for="(item2,index2) in item.starNum"
+                    :key="index2"
+                    src="../../../static/images/star.svg"
+                    alt
+                  />
+                  <img
+                    class="scoreStar"
+                    v-for="(item2,index2) in 5- item.starNum"
+                    :key="index2"
+                    src="../../../static/images/unstar.svg"
+                    alt
+                  />
+                </div>
+                <span class="commentScore">{{item.rating.average?item.rating.average:'暂无评分'}}</span>
+              </div>
+            </view>
+          </scroll-view>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -38,13 +52,24 @@
 export default {
   data () {
     return {
-      moveList: []
+      cateMoveList: [
+        {
+          name: '影院热映',
+          param: 'in_theaters',
+          list: []
+        },
+        {
+          name: '豆瓣电影top250',
+          param: 'top250',
+          list: []
+        }
+      ]
     }
   },
   methods: {
-    getMoveList () {
+    getMoveList (cate) {
       wx.request({
-        url: 'https://api.douban.com/v2/movie/in_theaters', // 开发者服务器接口地址",
+        url: `https://api.douban.com/v2/movie/${cate.param}`, // 开发者服务器接口地址",
         data: {
           apikey: '0df993c66c0c636e29ecbb5344252a4a'
         },
@@ -53,15 +78,26 @@ export default {
         },
         // 请求的参数",
         success: res => {
-          console.log(res)
+          // console.log(res)
+          let subjects = res.data.subjects
+          subjects.forEach(v => {
+            v.starNum = Math.ceil(v.rating.average / 2)
+          })
           // 将返回的数据添加到数组
-          this.moveList = res.data.subjects
+          cate.list = res.data.subjects
         }
       })
+    },
+    // 点击更多跳转页面
+    tomore (param) {
+      wx.navigateTo({ url: '/pages/more/main?param=' + param })
     }
   },
   created () {
-    this.getMoveList()
+    // 遍历数组判断是热映还是250
+    this.cateMoveList.forEach(v => {
+      this.getMoveList(v)
+    })
   }
 }
 </script>
